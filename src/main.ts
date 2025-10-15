@@ -5,22 +5,18 @@ import { Logger } from 'nestjs-pino';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
-  // Use Pino logger
   app.useLogger(app.get(Logger));
-
-  // Enable graceful shutdown hooks
   app.enableShutdownHooks();
 
   const port = process.env.PORT ?? 3001;
 
-  // Start listening on HTTP port (for metrics and health endpoints)
   await app.listen(port);
 
   const logger = app.get(Logger);
-  logger.log(`🚀 FB Collector is running on: http://localhost:${port}`);
-  logger.log(`📊 Metrics available at: http://localhost:${port}/metrics`);
-  logger.log(`❤️ Health endpoints: /health, /ready, /live`);
-  logger.log('🎧 Listening for Facebook events from NATS...');
+  logger.log(`FB Collector is running on: http://localhost:${port}`);
+  logger.log(`Metrics available at: http://localhost:${port}/metrics`);
+  logger.log(`Health endpoints: /health, /ready, /live`);
+  logger.log('Listening for Facebook events from NATS...');
 }
 
 bootstrap().catch((error) => {

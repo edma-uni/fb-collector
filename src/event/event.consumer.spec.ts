@@ -123,7 +123,6 @@ describe('EventConsumerService', () => {
         .spyOn(natsConsumerService, 'publish')
         .mockResolvedValue();
 
-      // Access the private method via reflection
       await (service as any).handleFacebookEvent(validEvent, mockMsg);
 
       expect(createSpy).toHaveBeenCalledWith({
@@ -152,12 +151,11 @@ describe('EventConsumerService', () => {
     it('should handle validation errors', async () => {
       const invalidEvent = {
         eventId: 'evt_123',
-        // missing required fields
       };
 
       await (service as any).handleFacebookEvent(invalidEvent, mockMsg);
 
-      expect(mockMsg.ack).toHaveBeenCalled(); // Should ack invalid messages
+      expect(mockMsg.ack).toHaveBeenCalled();
       expect(metricsService.incrementEventsFailed).toHaveBeenCalledWith(
         'facebook',
         'validation_error',
@@ -171,7 +169,7 @@ describe('EventConsumerService', () => {
 
       await (service as any).handleFacebookEvent(validEvent, mockMsg);
 
-      expect(mockMsg.ack).not.toHaveBeenCalled(); // Should NOT ack on processing errors
+      expect(mockMsg.ack).not.toHaveBeenCalled();
       expect(metricsService.incrementEventsFailed).toHaveBeenCalledWith(
         'facebook',
         'processing_error',
