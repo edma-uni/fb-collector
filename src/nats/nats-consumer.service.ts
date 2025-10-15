@@ -56,17 +56,14 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.info(`Connected to NATS server ${this.nc.getServer()}`);
 
-      // Update connection metric
       this.metricsService.setNatsConnectionStatus(true);
 
-      // Monitor connection status
       (async () => {
         for await (const status of this.nc.status()) {
           this.logger.info(
             `NATS connection status: ${status.type} - ${status.data}`,
           );
 
-          // Update metrics based on connection status
           const statusType = status.type.toString();
           if (statusType === 'disconnect' || statusType === 'error') {
             this.metricsService.setNatsConnectionStatus(false);
@@ -86,7 +83,7 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
     const streams: Partial<StreamConfig>[] = [
       {
         name: 'RAW_EVENTS',
-        subjects: ['raw.events.*.*.*'], // raw.events.{source}.{funnelStage}.{eventType}
+        subjects: ['raw.events.*.*.*'],
         retention: RetentionPolicy.Limits,
         max_age: 7 * 24 * 60 * 60 * 1_000_000_000, // 7 days in nanoseconds
         max_msgs: 1_000_000,
@@ -98,7 +95,7 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
       },
       {
         name: 'PROCESSED_EVENTS',
-        subjects: ['processed.events.*.*.*'], // processed.events.{source}.{funnelStage}.{eventType}
+        subjects: ['processed.events.*.*.*'],
         retention: RetentionPolicy.Limits,
         max_age: 7 * 24 * 60 * 60 * 1_000_000_000, // 7 days in nanoseconds
         max_msgs: 1_000_000,
@@ -125,18 +122,11 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /**
-   * Subscribe to a NATS JetStream subject and process messages
-   * @param subject - The subject pattern to subscribe to (e.g., "raw.events.tiktok.>")
-   * @param handler - Async function to handle each message
-   * @param consumerName - Optional consumer name for durable subscription
-   */
   async subscribe(
     subject: string,
     handler: MessageHandler,
     consumerName?: string,
   ): Promise<void> {
-    // Wait for JetStream to be initialized (with timeout)
     const maxWaitTime = 30000; // 30 seconds
     const startTime = Date.now();
     while (!this.js && Date.now() - startTime < maxWaitTime) {
@@ -159,7 +149,6 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
         filter_subject: subject,
       };
 
-      // Create or get existing consumer
       const durableName = consumerConfig.durable_name!;
       let consumer: Awaited<ReturnType<JetStreamClient['consumers']['get']>>;
       try {
@@ -180,20 +169,15 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
         `Subscribed to subject: ${subject} with consumer: ${consumerConfig.durable_name}`,
       );
 
-      // Start consuming messages
       const messages = await consumer.consume();
 
-      // Process messages in the background
       (async () => {
         for await (const msg of messages) {
           try {
-            // Increment received metric
             this.metricsService.incrementEventsReceived(msg.subject);
 
-            // Decode the message
             const data = this.jsonCodec.decode(msg.data);
 
-            // Call the handler
             await handler(data, msg);
           } catch (error) {
             this.logger.error(
@@ -203,7 +187,6 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
               },
               `Error processing message from ${msg.subject}`,
             );
-            // Handler should manage acknowledgment
           }
         }
       })();
@@ -228,11 +211,6 @@ export class NatsConsumerService implements OnModuleInit, OnModuleDestroy {
     return this.nc;
   }
 
-  /**
-   * Publish a message to NATS JetStream
-   * @param subject - The subject to publish to (e.g., "processed.events.facebook.top.ad.view")
-   * @param data - The data to publish
-   */
   async publish(subject: string, data: unknown): Promise<void> {
     if (!this.js) {
       throw new Error('JetStream is not initialized');

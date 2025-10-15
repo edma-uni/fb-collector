@@ -15,8 +15,6 @@ export class PrismaService
   }
 
   async onModuleInit() {
-    // Migrations are handled by entrypoint.sh
-    // Connect to the database
     await this.$connect();
     this.logger.info('Connected to database');
   }

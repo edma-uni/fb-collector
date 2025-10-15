@@ -6,7 +6,6 @@ describe('MetricsService', () => {
   let service: MetricsService;
 
   beforeEach(async () => {
-    // Clear all metrics before each test
     register.clear();
 
     const module: TestingModule = await Test.createTestingModule({

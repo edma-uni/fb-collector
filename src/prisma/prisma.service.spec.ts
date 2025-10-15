@@ -18,7 +18,6 @@ describe('PrismaService', () => {
           provide: PrismaService,
           useFactory: () => {
             const prisma = new PrismaService(mockLogger as any);
-            // Mock the connect methods to avoid actual database connection
             jest.spyOn(prisma, '$connect').mockResolvedValue();
             jest.spyOn(prisma, '$disconnect').mockResolvedValue();
             return prisma;
