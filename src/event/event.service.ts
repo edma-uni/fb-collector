@@ -23,7 +23,7 @@ export class EventConsumerService implements OnModuleInit {
   }
 
   private async subscribeToFacebookEvents() {
-    const subject = 'raw.events.facebook.>';
+    const subject = 'events.facebook';
 
     this.logger.info(`Subscribing to subject: ${subject}`);
 
@@ -73,25 +73,12 @@ export class EventConsumerService implements OnModuleInit {
 
       this.logger.debug('Event persisted to database');
 
-      const processedSubject = `processed.events.${validatedEvent.source}.${validatedEvent.funnelStage}.${validatedEvent.eventType}`;
-      await this.natsConsumer.publish(processedSubject, validatedEvent);
-
-      this.logger.debug(
-        { processedSubject },
-        'Event published to processed stream',
-      );
-
       msg.ack();
 
       const durationSeconds = (Date.now() - startTime) / 1000;
-      this.metrics.incrementEventsProcessed(
-        validatedEvent.source,
-        validatedEvent.eventType,
-        validatedEvent.funnelStage,
-      );
+      this.metrics.incrementEventsProcessed(validatedEvent.source);
       this.metrics.recordEventProcessingDuration(
         validatedEvent.source,
-        validatedEvent.eventType,
         durationSeconds,
       );
 
@@ -123,11 +110,7 @@ export class EventConsumerService implements OnModuleInit {
       }
 
       const durationSeconds = (Date.now() - startTime) / 1000;
-      this.metrics.recordEventProcessingDuration(
-        'facebook',
-        'unknown',
-        durationSeconds,
-      );
+      this.metrics.recordEventProcessingDuration('facebook', durationSeconds);
     }
   }
 }
