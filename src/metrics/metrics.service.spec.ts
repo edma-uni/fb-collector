@@ -25,25 +25,23 @@ describe('MetricsService', () => {
 
   describe('incrementEventsReceived', () => {
     it('should increment events received counter', async () => {
-      service.incrementEventsReceived('raw.events.facebook.top.ad.view');
-      service.incrementEventsReceived('raw.events.facebook.top.ad.view');
+      service.incrementEventsReceived('events.facebook');
+      service.incrementEventsReceived('events.facebook');
 
       const metrics = await register.metrics();
       expect(metrics).toContain('collector_events_received_total');
-      expect(metrics).toContain('subject="raw.events.facebook.top.ad.view"');
+      expect(metrics).toContain('subject="events.facebook"');
     });
   });
 
   describe('incrementEventsProcessed', () => {
     it('should increment events processed counter', async () => {
-      service.incrementEventsProcessed('facebook', 'ad.view', 'top');
-      service.incrementEventsProcessed('facebook', 'ad.view', 'top');
+      service.incrementEventsProcessed('facebook');
+      service.incrementEventsProcessed('facebook');
 
       const metrics = await register.metrics();
       expect(metrics).toContain('collector_events_processed_total');
       expect(metrics).toContain('source="facebook"');
-      expect(metrics).toContain('event_type="ad.view"');
-      expect(metrics).toContain('funnel_stage="top"');
     });
   });
 
@@ -62,13 +60,12 @@ describe('MetricsService', () => {
 
   describe('recordEventProcessingDuration', () => {
     it('should record event processing duration', async () => {
-      service.recordEventProcessingDuration('facebook', 'ad.view', 0.123);
-      service.recordEventProcessingDuration('facebook', 'ad.view', 0.456);
+      service.recordEventProcessingDuration('facebook', 0.123);
+      service.recordEventProcessingDuration('facebook', 0.456);
 
       const metrics = await register.metrics();
       expect(metrics).toContain('collector_event_processing_duration_seconds');
       expect(metrics).toContain('source="facebook"');
-      expect(metrics).toContain('event_type="ad.view"');
     });
   });
 

@@ -11,7 +11,6 @@ describe('EventConsumerService', () => {
   let service: EventConsumerService;
   let prismaService: PrismaService;
   let metricsService: MetricsService;
-  let natsConsumerService: NatsConsumerService;
 
   const mockLogger = {
     info: jest.fn(),
@@ -71,7 +70,6 @@ describe('EventConsumerService', () => {
     service = module.get<EventConsumerService>(EventConsumerService);
     prismaService = module.get<PrismaService>(PrismaService);
     metricsService = module.get<MetricsService>(MetricsService);
-    natsConsumerService = module.get<NatsConsumerService>(NatsConsumerService);
   });
 
   it('should be defined', () => {
@@ -108,7 +106,7 @@ describe('EventConsumerService', () => {
 
     beforeEach(() => {
       mockMsg = {
-        subject: 'raw.events.facebook.top.ad.view',
+        subject: 'events.facebook',
         ack: jest.fn(),
         nak: jest.fn(),
       } as unknown as JsMsg;
@@ -119,9 +117,6 @@ describe('EventConsumerService', () => {
       const createSpy = jest
         .spyOn(prismaService.facebookEvent, 'create')
         .mockResolvedValue({} as any);
-      const publishSpy = jest
-        .spyOn(natsConsumerService, 'publish')
-        .mockResolvedValue();
 
       await (service as any).handleFacebookEvent(validEvent, mockMsg);
 
@@ -135,16 +130,13 @@ describe('EventConsumerService', () => {
         },
       });
 
-      expect(publishSpy).toHaveBeenCalledWith(
-        'processed.events.facebook.top.ad.view',
-        validEvent,
-      );
-
       expect(mockMsg.ack).toHaveBeenCalled();
       expect(metricsService.incrementEventsProcessed).toHaveBeenCalledWith(
         'facebook',
-        'ad.view',
-        'top',
+      );
+      expect(metricsService.recordEventProcessingDuration).toHaveBeenCalledWith(
+        'facebook',
+        expect.any(Number),
       );
     });
 
@@ -160,6 +152,10 @@ describe('EventConsumerService', () => {
         'facebook',
         'validation_error',
       );
+      expect(metricsService.recordEventProcessingDuration).toHaveBeenCalledWith(
+        'facebook',
+        expect.any(Number),
+      );
     });
 
     it('should handle processing errors', async () => {
@@ -173,6 +169,10 @@ describe('EventConsumerService', () => {
       expect(metricsService.incrementEventsFailed).toHaveBeenCalledWith(
         'facebook',
         'processing_error',
+      );
+      expect(metricsService.recordEventProcessingDuration).toHaveBeenCalledWith(
+        'facebook',
+        expect.any(Number),
       );
     });
   });

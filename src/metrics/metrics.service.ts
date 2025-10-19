@@ -21,7 +21,7 @@ export class MetricsService {
     this.eventsProcessedTotal = new Counter({
       name: 'collector_events_processed_total',
       help: 'Total number of events successfully processed and saved',
-      labelNames: ['source', 'event_type', 'funnel_stage'],
+      labelNames: ['source'],
       registers: [register],
     });
 
@@ -35,7 +35,7 @@ export class MetricsService {
     this.eventProcessingDuration = new Histogram({
       name: 'collector_event_processing_duration_seconds',
       help: 'Duration of event processing in seconds',
-      labelNames: ['source', 'event_type'],
+      labelNames: ['source'],
       buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
       registers: [register],
     });
@@ -51,15 +51,9 @@ export class MetricsService {
     this.eventsReceivedTotal.inc({ subject });
   }
 
-  incrementEventsProcessed(
-    source: string,
-    eventType: string,
-    funnelStage: string,
-  ): void {
+  incrementEventsProcessed(source: string): void {
     this.eventsProcessedTotal.inc({
       source,
-      event_type: eventType,
-      funnel_stage: funnelStage,
     });
   }
 
@@ -67,15 +61,8 @@ export class MetricsService {
     this.eventsFailedTotal.inc({ source, reason });
   }
 
-  recordEventProcessingDuration(
-    source: string,
-    eventType: string,
-    durationSeconds: number,
-  ): void {
-    this.eventProcessingDuration.observe(
-      { source, event_type: eventType },
-      durationSeconds,
-    );
+  recordEventProcessingDuration(source: string, durationSeconds: number): void {
+    this.eventProcessingDuration.observe({ source }, durationSeconds);
   }
 
   setNatsConnectionStatus(connected: boolean): void {
